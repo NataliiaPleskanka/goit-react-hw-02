@@ -1,35 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import "./App.css";
+import Description from "./components/Description/Description";
+import Options from "./components/Options/Options";
+import Feedback from "./components/Feedback/Feedback";
+import Notification from "./components/Notification/Notification";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [count, setCount] = useState(() => {
+    const savedObject = window.localStorage.getItem("saved-count");
+    return savedObject
+      ? JSON.parse(savedObject)
+      : {
+          good: 0,
+          neutral: 0,
+          bad: 0,
+        };
+  });
+  const totalFeedback = count.good + count.neutral + count.bad;
+  const updateFeedback = (feedbackType) => {
+    setCount({ ...count, [feedbackType]: count[feedbackType] + 1 });
+  };
+  const deleteFeedback = () => setCount({ good: 0, neutral: 0, bad: 0 });
+  const positive = Math.round((count.good / totalFeedback) * 100);
+  useEffect(() => {
+    window.localStorage.setItem("saved-count", JSON.stringify(count));
+  }, [count]);
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="container">
+      <Description />
+      <Options
+        grades={Object.keys(count)}
+        onclick={updateFeedback}
+        totalCounts={totalFeedback}
+        onreset={deleteFeedback}
+      />
+      {totalFeedback === 0 ? (
+        <Notification />
+      ) : (
+        <Feedback
+          count={count}
+          grades={Object.keys(count)}
+          totalCounts={totalFeedback}
+          positive={positive}
+        />
+      )}
+    </div>
+  );
 }
-
-export default App
